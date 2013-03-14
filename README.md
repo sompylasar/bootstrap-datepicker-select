@@ -1,4 +1,1 @@
-bootstrap-datepicker-select
-===========================
-
-A @twitter bootstrap component for selecting a date from three dropdowns: year, month, day.
+# bootstrap-datepicker-selectA @twitter bootstrap component for selecting a date from three dropdowns: year, month, day.Inspired by several projects:* [jQuery.dateSelectBoxes by Nick Busey](http://nickabusey.com/jquery-date-select-boxes-plugin/)* [Birthdaypicker by abecoffman](https://github.com/abecoffman/birthdaypicker)* [Bootstrap Datepicker by eternicode](https://github.com/eternicode/bootstrap-datepicker)* [Convert Select Boxes to a Fancy HTML Dropdown](http://blog.iamjamoy.com/convert-select-boxes-to-a-fancy-html-dropdown)Depends on:* [Bootstrap by twitter](http://twitter.github.com/bootstrap/)* [Bootstrap Dropdown by twitter](http://twitter.github.com/bootstrap/assets/js/bootstrap-dropdown.js)* [Bootstrap Datepicker by eternicode](https://github.com/eternicode/bootstrap-datepicker)Uses [locales](https://github.com/eternicode/bootstrap-datepicker/tree/master/js/locales) from [Bootstrap Datepicker by eternicode](https://github.com/eternicode/bootstrap-datepicker)
