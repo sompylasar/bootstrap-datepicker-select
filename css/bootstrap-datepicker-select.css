@@ -5,6 +5,7 @@
 
 .datepicker-select .dropdown-value {
 	cursor: text;
+	color: #333333;
 }
 .datepicker-select .datepicker-select-year .dropdown-value {
 	width: 34px;
