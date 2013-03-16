@@ -46,9 +46,9 @@
 		_this.$month = _this.element.find('.datepicker-select-month');
 		_this.$day = _this.element.find('.datepicker-select-day');
 		
-		_this._makeDropdown(_this.$year);
+		_this._makeDropdown(_this.$year).addClass('dropdown-long');
 		_this._makeDropdown(_this.$month);
-		_this._makeDropdown(_this.$day);
+		_this._makeDropdown(_this.$day).addClass('dropdown-long');
 		
 		_this._populateSelect(_this.$year, 1900, nowDate.getFullYear(), true);
 		_this._populateSelect(_this.$month, 1, 12);
@@ -122,6 +122,8 @@
 				});
 			
 			$select.change();
+			
+			return $dd;
 		},
 		_populateDropdown: function ($select, $dd) {
 			var $dd = $dd || $select.nextAll('.dropdown-menu:eq(0)');

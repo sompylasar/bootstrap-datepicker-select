@@ -15,10 +15,12 @@
 }
 
 .datepicker-select .dropdown-menu {
-	max-height: 400px;
+	z-index: -1; /* For arrow to be above the menu. */
+}
+.datepicker-select .dropdown-menu.dropdown-long {
+	max-height: 300px;
 	overflow: hidden;
 	overflow-y: auto;
-	z-index: -1; /* For arrow to be above the menu. */
 }
 .datepicker-select .dropdown-menu > li.m-selected {
 	background: #efefef;
