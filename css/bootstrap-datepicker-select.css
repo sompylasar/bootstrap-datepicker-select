@@ -13,7 +13,7 @@
 .datepicker-select .datepicker-select-day .dropdown-value {
 	width: 20px;
 }
-.datepicker-select .datepicker-select-month.m-names .dropdown-value {
+.datepicker-select .datepicker-select-month .dropdown-value.dropdown-wide {
 	width: 80px;
 }
 

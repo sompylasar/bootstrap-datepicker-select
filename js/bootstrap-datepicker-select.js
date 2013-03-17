@@ -21,6 +21,15 @@
 	var DPGlobal = $.fn.datepicker.DPGlobal;
 	var dates = $.fn.datepicker.dates;
 
+	// Copied from Bootstrap Datepicker by eternicode.
+	function UTCDate() {
+		return new Date(Date.UTC.apply(Date, arguments));
+	}
+	function UTCToday() {
+		var today = new Date();
+		return UTCDate(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate());
+	}
+
 	// Copied from Bootstrap Dropdown's private scope to be able to close other Dropdowns on the page.
 	var Dropdown_toggle = '[data-toggle=dropdown]';
 
@@ -48,7 +57,7 @@
 	
 	var DatepickerSelect = function (element, options) {
 		var _this = this;
-		var nowDate = new Date();
+		var nowDate = UTCToday();
 		
 		_this.element = $(element);
 		_this.language = options.language||_this.element.data('date-language')||"en";
@@ -67,48 +76,142 @@
 		_this.measureWidth = !!options.measureWidth;
 		
 		_this.$input = _this.element.find('.datepicker-select-input');
+		
+		var selectedDate = options.date || _this.$input.val() || nowDate;
+		selectedDate = DPGlobal.parseDate(selectedDate, _this.format, _this.language);
+		
+		var year = selectedDate.getUTCFullYear();
+		var month = (selectedDate.getUTCMonth() + 1);
+		var day = selectedDate.getUTCDate();
+		
 		_this.$year = _this.element.find('.datepicker-select-year');
 		_this.$month = _this.element.find('.datepicker-select-month');
 		_this.$day = _this.element.find('.datepicker-select-day');
 		
-		_this.$yearDropdown = _this._makeDropdown(_this.$year).addClass('dropdown-long');
-		_this.$monthDropdown = _this._makeDropdown(_this.$month);
-		_this.$dayDropdown = _this._makeDropdown(_this.$day).addClass('dropdown-long');
+		_this._populateSelect(_this.$year, 1900, nowDate.getFullYear(), !!options.yearsReverse);
+		_this._populateSelect(_this.$month, 1, 12, false, _this.monthNames);
 		
-		_this._populateSelect(_this.$year, _this.$yearDropdown, 1900, nowDate.getFullYear(), true);
-		_this._populateSelect(_this.$month, _this.$monthDropdown, 1, 12, false, _this.monthNames);
-		_this._populateSelect(_this.$day, _this.$dayDropdown, 1, 31);
+		_this.$year.val( year );
+		_this.$month.val( month );
 		
-		_this.$month.add(_this.$year)
-			.change(function () {
+		_this._populateSelect(_this.$day, 1, DPGlobal.getDaysInMonth(year, month - 1));
+		
+		_this.$day.val( day );
+		
+		_this.$yearDropdown = _this._makeDropdown(_this.$year, true);
+		_this.$monthDropdown = _this._makeDropdown(_this.$month, false, !!_this.monthNames);
+		_this.$dayDropdown = _this._makeDropdown(_this.$day, true);
+		
+		_this._populateDropdown(_this.$year, _this.$yearDropdown);
+		_this._populateDropdown(_this.$month, _this.$monthDropdown);
+		_this._populateDropdown(_this.$day, _this.$dayDropdown);
+		
+		_this.$day
+			.on('change.datepicker-select', function () {
+				_this.$input.val(_this.getFormattedDate()).trigger('change.datepicker-select');
+			});
+		
+		_this.$year.add(_this.$month)
+			.on('change.datepicker-select', function () {
 				var year = parseInt(_this.$year.val(), 10);
 				var month = parseInt(_this.$month.val(), 10);
-				_this._populateSelect(_this.$day, _this.$dayDropdown, 1, DPGlobal.getDaysInMonth(year, month - 1));
-			})
-			.change();
+				var day = parseInt(_this.$day.val(), 10);
+				_this._populateSelect(_this.$day,  1, DPGlobal.getDaysInMonth(year, month - 1));
+				_this._populateDropdown(_this.$day, _this.$dayDropdown);
+				_this.$day.val(day).trigger('change.datepicker-select');
+			});
+		
+		_this.$input.val(_this.getFormattedDate()).trigger('change.datepicker-select');
 	};
 	DatepickerSelect.prototype = {
 		constructor: DatepickerSelect,
-		
-		getDate: function () {
-			var date = new Date(this.$year.val() + '-' + this.$month.val() + '-' + this.$day.val() + 'T00:00:00');
-			return date;
+
+		/**
+		 * Returns the currently selected date.
+		 * 
+		 * @returns {Date|undefined} The selected date (local timezone), or undefined if something went wrong.
+		 */
+		getDate: function() {
+			var d = this.getUTCDate();
+			if (d) {
+				return new Date(d.getTime() + (d.getTimezoneOffset()*60000));
+			}
 		},
-		getFormattedDate: function(format) {
+
+		/**
+		 * Returns the currently selected date in UTC.
+		 * 
+		 * @returns {Date|undefined} The selected date (UTC), or undefined if something went wrong.
+		 */
+		getUTCDate: function() {
+			var _this = this;
+			var year = parseInt(_this.$year.val(), 10);
+			var month = parseInt(_this.$month.val(), 10);
+			var day = parseInt(_this.$day.val(), 10);
+			if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
+				return UTCDate(year, month - 1, day, 0, 0, 0);
+			}
+		},
+
+		setDate: function (date, format) {
+			var _this = this;
 			if (format === undefined)
-				format = this.format;
-			return DPGlobal.formatDate(this.getDate(), format, this.language);
+				format = _this.format;
+			date = DPGlobal.parseDate(date, format, _this.language);
+			this.setUTCDate(new Date(date.getTime() - (date.getTimezoneOffset()*60000)));
 		},
-		
-		_makeDropdown: function ($select) {
+
+		/**
+		 * Sets the currently selected date.
+		 * Only year (getUTCFullYear), month (getUTCMonth) and date (getUTCDate) components are used.
+		 * 
+		 * @param {Date|String} date The date object or a string in the current or the specified format.
+		 * @param {Object} [format] Parsed format returned from DPGlobal.parseFormat(format:String)
+		 */
+		setUTCDate: function (date, format) {
+			var _this = this;
+			if (format === undefined)
+				format = _this.format;
+			date = DPGlobal.parseDate(date, format, _this.language);
+			var year = date.getUTCFullYear();
+			var month = (date.getUTCMonth() + 1);
+			var day = date.getUTCDate();
+			if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
+				_this.$year.val( year ).trigger('change.datepicker-select');
+				_this.$month.val( month ).trigger('change.datepicker-select');
+				_this.$day.val( day ).trigger('change.datepicker-select');
+			}
+		},
+
+		/**
+		 * Returns the formatted date string.
+		 * 
+		 * @param {Object} [format] Parsed format returned from DPGlobal.parseFormat(format:String)
+		 * @param {String} The date formatted according to the current or the specified format.
+		 */
+		getFormattedDate: function (format) {
+			var _this = this;
+			if (format === undefined)
+				format = _this.format;
+			return DPGlobal.formatDate(_this.getUTCDate(), format, _this.language);
+		},
+
+		update: function () {
+			var _this = this;
+			if (_this.$input.length) {
+				_this.setUTCDate(_this.$input.val());
+			}
+		},
+
+		_makeDropdown: function ($select, isLong, isWide) {
 			var _this = this;
 			
 			var $wrapper = $('<div class="btn-group input-append ' + $select[0].className + '">' +
-					'<span class="dropdown-value uneditable-input"></span>' +
+					'<span class="dropdown-value uneditable-input' + (isWide ? ' dropdown-wide' : '') + '"></span>' +
 					'<a class="add-on btn dropdown-toggle" href="javascript:;">' +
 						'<span class="caret"></span>' +
 					'</a>' +
-					'<ul class="dropdown-menu"></ul>' +
+					'<ul class="dropdown-menu' + (isLong ? ' dropdown-long' : '') + (isWide ? ' dropdown-wide' : '') + '"></ul>' +
 					'<div class="dropdown-arrow"></div>' +
 				'</div>');
 			
@@ -118,8 +221,6 @@
 			
 			$select.hide().after($wrapper);
 			$wrapper.prepend($select);
-			
-			_this._populateDropdown($select, $dd);
 			
 			$('html')
 				.on('click.datepicker-select', function () {
@@ -148,10 +249,7 @@
 			
 			$select
 				.on('change.datepicker-select', function () {
-					var val = $select.val();
-					var $option = $select.find('option[value="' + val + '"]');
-					$v.html($option.html() || '&nbsp;');
-					$dd.find('a[data-value="' + val + '"]').focus();
+					_this._populateValue($select, $dd, $v);
 				});
 			
 			$dd
@@ -177,9 +275,22 @@
 					$select.val($(this).data('value')).trigger('change.datepicker-select');
 				});
 			
-			$select.trigger('change.datepicker-select');
+			_this._populateDropdown($select, $dd);
+			_this._populateValue($select, $dd, $v);
 			
 			return $dd;
+		},
+		_populateValue: function ($select, $dd, $v) {
+			var val = $select.val();
+			var empty = '&nbsp;';
+			if (val !== undefined) {
+				var $option = $select.find('option[value="' + val + '"]');
+				$v.html($option.html() || empty);
+				$dd.find('a[data-value="' + val + '"]').focus();
+			}
+			else {
+				$v.html(empty);
+			}
 		},
 		_populateDropdown: function ($select, $dd) {
 			var val = $select.val();
@@ -215,8 +326,7 @@
 			// Focus the currently active item:
 			$dd.find('a[data-value="' + val + '"]').focus();
 		},
-		_populateSelect: function ($select, $dd, fromValue, toValue, reverse, displayNames) {
-			var val = $select.val();
+		_populateSelect: function ($select, fromValue, toValue, reverse, displayNames) {
 			var items = '';
 			for (var
 				vbegin = (reverse ? toValue : fromValue),
@@ -230,11 +340,7 @@
 			) {
 				items += '<option value="' + v + '">' + (displayNames ? displayNames[i] : v) + '</option>';
 			}
-			$select.html(items).val(val).trigger('change.datepicker-select');
-			this._populateDropdown($select, $dd);
-			if (displayNames) {
-				$dd.parent().addClass('m-names');
-			}
+			$select.html(items);
 		}
 	};
 	
@@ -255,7 +361,11 @@
 	};
 	
 	$.fn.datepickerSelect.defaults = {
+		date: undefined,
+		language: undefined,
+		format: undefined,
 		monthNames: undefined,
+		yearsReverse: true,
 		measureWidth: false
 	};
 	$.fn.datepickerSelect.Constructor = DatepickerSelect;
@@ -336,4 +446,7 @@
 			}
 		});
 
+	$(function () {
+		$('[data-toggle="datepicker-select"]').datepickerSelect();
+	});
 }( window.jQuery );
