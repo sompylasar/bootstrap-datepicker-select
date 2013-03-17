@@ -30,6 +30,30 @@
 		}
 	};
 
+	var Dropdown_toggle = '[data-toggle=dropdown]';
+
+	function Dropdown_clearMenus() {
+		$(Dropdown_toggle).each(function () {
+			Dropdown_getParent($(this)).removeClass('open')
+		})
+	}
+
+	function Dropdown_getParent($this) {
+		var selector = $this.attr('data-target')
+			, $parent
+
+		if (!selector) {
+			selector = $this.attr('href')
+			selector = selector && /#/.test(selector) && selector.replace(/.*(?=#[^\s]*$)/, '') //strip for ie7
+		}
+
+		$parent = selector && $(selector)
+
+		if (!$parent || !$parent.length) $parent = $this.parent()
+
+		return $parent
+	}
+	
 	var DatepickerSelect = function (element, options) {
 		var _this = this;
 		var nowDate = new Date();
@@ -46,19 +70,19 @@
 		_this.$month = _this.element.find('.datepicker-select-month');
 		_this.$day = _this.element.find('.datepicker-select-day');
 		
-		_this._makeDropdown(_this.$year).addClass('dropdown-long');
-		_this._makeDropdown(_this.$month);
-		_this._makeDropdown(_this.$day).addClass('dropdown-long');
+		_this.$yearDropdown = _this._makeDropdown(_this.$year).addClass('dropdown-long');
+		_this.$monthDropdown = _this._makeDropdown(_this.$month);
+		_this.$dayDropdown = _this._makeDropdown(_this.$day).addClass('dropdown-long');
 		
-		_this._populateSelect(_this.$year, 1900, nowDate.getFullYear(), true);
-		_this._populateSelect(_this.$month, 1, 12);
-		_this._populateSelect(_this.$day, 1, 31);
+		_this._populateSelect(_this.$year, _this.$yearDropdown, 1900, nowDate.getFullYear(), true);
+		_this._populateSelect(_this.$month, _this.$monthDropdown, 1, 12);
+		_this._populateSelect(_this.$day, _this.$dayDropdown, 1, 31);
 		
 		_this.$month.add(_this.$year)
 			.change(function () {
 				var year = parseInt(_this.$year.val(), 10);
 				var month = parseInt(_this.$month.val(), 10);
-				_this._populateSelect(_this.$day, 1, DPGlobal.getDaysInMonth(year, month - 1));
+				_this._populateSelect(_this.$day, _this.$dayDropdown, 1, DPGlobal.getDaysInMonth(year, month - 1));
 			})
 			.change();
 	};
@@ -80,75 +104,106 @@
 			
 			var $wrapper = $('<div class="btn-group input-append ' + $select[0].className + '">' +
 					'<span class="dropdown-value uneditable-input input-mini"></span>' +
-					'<a class="add-on btn dropdown-toggle" data-toggle="dropdown" href="javascript:;">' +
+					'<a class="add-on btn dropdown-toggle" href="javascript:;">' +
 						'<span class="caret"></span>' +
 					'</a>' +
 					'<ul class="dropdown-menu"></ul>' +
+					'<div class="dropdown-arrow"></div>' +
 				'</div>');
 			
 			var $v = $wrapper.find('.dropdown-value');
 			var $dd = $wrapper.find('.dropdown-menu');
+			var $arrow = $wrapper.find('.dropdown-arrow');
 			
-			$select.hide().before($wrapper);
+			$select.hide().after($wrapper);
 			$wrapper.prepend($select);
 			
 			_this._populateDropdown($select, $dd);
 			
+			$('html')
+				.on('click.datepicker-select', function () {
+					$wrapper.removeClass('open');
+					$dd.before($arrow.removeClass('m-open'));
+				});
+			
 			$wrapper.find('.dropdown-toggle')
-				.click(function () {
-					window.setTimeout(function () {
-						if ($wrapper.hasClass('open')) {
-							var $selected = $dd.find('.m-selected');
-							if ($selected[0].scrollIntoView) {
-								$selected[0].scrollIntoView();
-								$dd.scrollTop( $dd.scrollTop() - parseInt($dd.css('paddingTop'), 10) );
-							}
-						}
-					}, 0);
+				.on('focus.datepicker-select', function () {
+					Dropdown_clearMenus();
+					$('.open > .dropdown-menu').each(function () { $(this).parent().removeClass('open'); });
+				})
+				.on('click.datepicker-select', function (event) {
+					if (!$wrapper.hasClass('open')) {
+						Dropdown_clearMenus();
+						$('.open > .dropdown-menu').each(function () { $(this).parent().removeClass('open'); });
+						
+						$dd.removeClass('keyboard-nav');
+						
+						$wrapper.addClass('open');
+						var val = $select.val();
+						$dd.find('a[data-value="' + val + '"]').focus();
+						event.stopPropagation();
+					}
 				});
 			
 			$select
-				.change(function () {
+				.on('change.datepicker-select', function () {
 					var val = $select.val();
 					var $option = $select.find('option[value="' + val + '"]');
 					$v.html($option.html() || '&nbsp;');
-					$dd.find('.m-selected').removeClass('m-selected');
-					$dd.find('a[data-value="' + val + '"]').closest('li').addClass('m-selected');
+					$dd.find('a[data-value="' + val + '"]').focus();
 				});
 			
 			$dd
+				.on('focus', 'a', function (event) {
+					$dd.find('a.focus').removeClass('focus');
+					$(this).addClass('focus');
+				})
+				.on('mousemove', 'a', function (event) {
+					var $this = $(this);
+					var thisHeight = $this.closest('li').outerHeight();
+					var thisTop = $this.position().top;
+					if (thisTop < -thisHeight/2) { return; }
+					var ddHeight = $dd.height();
+					if (thisTop + thisHeight/2 > ddHeight) { return; }
+					
+					// Do not handle the mouse while the user is using only the keyboard.
+					if (!$dd.hasClass('keyboard-nav')) {
+						$(this).addClass('focus').focus();
+					}
+					$dd.removeClass('keyboard-nav');
+				})
 				.on('click', 'a', function () {
-					$select.val($(this).data('value')).change();
+					$select.val($(this).data('value')).trigger('change.datepicker-select');
 				});
 			
-			$select.change();
+			$select.trigger('change.datepicker-select');
 			
 			return $dd;
 		},
 		_populateDropdown: function ($select, $dd) {
-			var $dd = $dd || $select.nextAll('.dropdown-menu:eq(0)');
 			var val = $select.val();
-			var options = '';
+			var items = '';
 			$select.find('option').each(function () {
 				var $option = $(this);
 				var v = $option.attr('value');
-				options += '<li' + (v === val ? ' class="m-selected"' : '') + '><a href="javascript:;" data-value="' + v + '">' + ($option.html() || '&nbsp;') + '</a></li>';
+				items += '<li><a href="javascript:;" data-value="' + v + '">' + ($option.html() || '&nbsp;') + '</a></li>';
 			});
-			$dd.html(options);
+			$dd.html(items);
+			$dd.find('a[data-value="' + val + '"]').focus();
 		},
-		_populateSelect: function ($select, fromValue, toValue, reverse) {
+		_populateSelect: function ($select, $dd, fromValue, toValue, reverse) {
 			var val = $select.val();
-			var options = '';
+			var items = '';
 			for (var v = (reverse ? toValue : fromValue),
 				vc = (reverse ? fromValue : toValue),
 				vx = (reverse ? -1 : 1);
 				(reverse ? v >= vc : v <= vc);
 				v += vx
 			) {
-				options += '<option value="' + v + '">' + v + '</option>';
+				items += '<option value="' + v + '">' + v + '</option>';
 			}
-			$select.html(options).val(val).change();
-			this._populateDropdown($select);
+			$select.html(items).val(val).trigger('change.datepicker-select');
+			this._populateDropdown($select, $dd);
 		}
 	};
 	
@@ -171,5 +226,81 @@
 	$.fn.datepickerSelect.defaults = {
 	};
 	$.fn.datepickerSelect.Constructor = DatepickerSelect;
+
+	$(document)
+		.on('keydown.datepicker-select', function (e) {
+			var $items;
+			var $item;
+			var count;
+			var itemHeight;
+			var itemsOnPage;
+			var $toggle = $('.dropdown-toggle:focus');
+			var $dd = $(':not(.disabled, :disabled).open > .dropdown-menu');
+			var $select;
+
+			if (!$dd.length && !$toggle.length) return;
+
+			if (!/(38|40|37|39|36|35|33|34|9|13|27)/.test(e.keyCode)) return;
+
+			if ($dd.length) {
+				$items = $dd.find(' > li:not(.divider):visible a');
+				$item = $items.filter(':focus, .focus').eq(0);
+				
+				if (e.keyCode == 9 || e.keyCode == 13) { // tab || enter
+					$item.trigger('click');
+					$dd.parent().find('.dropdown-toggle').focus();
+					return;
+				}
+				if (e.keyCode == 27) { // escape
+					$dd.parent().find('.dropdown-toggle').focus();
+					return;
+				}
+				
+				itemHeight = $items.eq(0).closest('li').outerHeight();
+				itemsOnPage = Math.floor($dd.height() / itemHeight);
+			}
+			else {
+				$select = $toggle.parent().find('select:not(.disabled, :disabled)');
+				$items = $select.find('> option:not(.disabled, :disabled)');
+				$item = $items.filter('[value="' + $select.val() + '"]');
+				itemsOnPage = 10;
+				
+				if (e.keyCode == 9 || e.keyCode == 13) { // tab || enter
+					return;
+				}
+				if (e.keyCode == 27) { // escape
+					return;
+				}
+			}
+
+			$dd.addClass('keyboard-nav');
+
+			e.preventDefault();
+			e.stopPropagation();
+
+			count = $items.length;
+			if (!count) return;
+
+			var index = $items.index($item);
+
+			if (e.keyCode == 38 && index > 0) index--;                                        // up
+			if (e.keyCode == 40 && index < count - 1) index++;                                // down
+			if (!$dd.length && e.keyCode == 37 && index > 0) index--;                                        // left
+			if (!$dd.length && e.keyCode == 39 && index < count - 1) index++;                                // right
+			if (e.keyCode == 36) index = 0;                                                   // home
+			if (e.keyCode == 35) index = count - 1;                                           // end
+			if (e.keyCode == 33) index = (index - itemsOnPage > 0 ? index - itemsOnPage : 0);           // page up
+			if (e.keyCode == 34) index = (index + itemsOnPage < count - 1 ? index + itemsOnPage : count - 1);  // page down
+			if (!~index) index = 0;
+
+			$item = $items.eq(index);
+
+			if ($dd.length) {
+				$item.focus();
+			}
+			else {
+				$select.val($item.attr('value')).trigger('change.datepicker-select');
+			}
+		});
 
 }( window.jQuery );
