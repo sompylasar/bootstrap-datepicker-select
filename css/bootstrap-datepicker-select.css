@@ -13,6 +13,9 @@
 .datepicker-select .datepicker-select-day .dropdown-value {
 	width: 20px;
 }
+.datepicker-select .datepicker-select-month.m-names .dropdown-value {
+	width: 120px;
+}
 
 .datepicker-select .dropdown-menu {
 	z-index: 4;

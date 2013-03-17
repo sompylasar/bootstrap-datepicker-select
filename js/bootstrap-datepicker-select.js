@@ -17,7 +17,7 @@
  * limitations under the License.
  * ========================================================= */
 
-!function( $ ) {
+!function( $, undefined ) {
 	var DPGlobal = $.fn.datepicker.DPGlobal;
 	var dates = $.fn.datepicker.dates = {
 		en: {
@@ -64,6 +64,14 @@
 		_this.language = _this.language in dates ? _this.language : "en";
 		//_this.isRTL = dates[_this.language].rtl||false;
 		_this.format = DPGlobal.parseFormat(options.format||_this.element.data('date-format')||dates[_this.language].format||'mm/dd/yyyy');
+		_this.monthnames = (options.monthnames === undefined ? _this.element.data('date-monthnames') : options.monthnames);
+		_this.monthnames = ($.isArray(_this.monthnames)
+			? _this.monthnames
+			: (_this.monthnames === true || _this.monthnames === 'true'
+				? dates[_this.language].months
+				: undefined
+			)
+		);
 		
 		_this.$input = _this.element.find('.datepicker-select-input');
 		_this.$year = _this.element.find('.datepicker-select-year');
@@ -75,7 +83,7 @@
 		_this.$dayDropdown = _this._makeDropdown(_this.$day).addClass('dropdown-long');
 		
 		_this._populateSelect(_this.$year, _this.$yearDropdown, 1900, nowDate.getFullYear(), true);
-		_this._populateSelect(_this.$month, _this.$monthDropdown, 1, 12);
+		_this._populateSelect(_this.$month, _this.$monthDropdown, 1, 12, false, _this.monthnames);
 		_this._populateSelect(_this.$day, _this.$dayDropdown, 1, 31);
 		
 		_this.$month.add(_this.$year)
@@ -103,7 +111,7 @@
 			var _this = this;
 			
 			var $wrapper = $('<div class="btn-group input-append ' + $select[0].className + '">' +
-					'<span class="dropdown-value uneditable-input input-mini"></span>' +
+					'<span class="dropdown-value uneditable-input"></span>' +
 					'<a class="add-on btn dropdown-toggle" href="javascript:;">' +
 						'<span class="caret"></span>' +
 					'</a>' +
@@ -191,19 +199,26 @@
 			$dd.html(items);
 			$dd.find('a[data-value="' + val + '"]').focus();
 		},
-		_populateSelect: function ($select, $dd, fromValue, toValue, reverse) {
+		_populateSelect: function ($select, $dd, fromValue, toValue, reverse, displayNames) {
 			var val = $select.val();
 			var items = '';
-			for (var v = (reverse ? toValue : fromValue),
-				vc = (reverse ? fromValue : toValue),
-				vx = (reverse ? -1 : 1);
-				(reverse ? v >= vc : v <= vc);
-				v += vx
+			for (var
+				vbegin = (reverse ? toValue : fromValue),
+				vend = (reverse ? fromValue : toValue),
+				vdelta = (reverse ? -1 : 1),
+				v = vbegin,
+				i = 0;
+				(reverse ? v >= vend : v <= vend);
+				v += vdelta,
+				i += 1
 			) {
-				items += '<option value="' + v + '">' + v + '</option>';
+				items += '<option value="' + v + '">' + (displayNames ? displayNames[i] : v) + '</option>';
 			}
 			$select.html(items).val(val).trigger('change.datepicker-select');
 			this._populateDropdown($select, $dd);
+			if (displayNames) {
+				$dd.parent().addClass('m-names');
+			}
 		}
 	};
 	
@@ -224,6 +239,7 @@
 	};
 	
 	$.fn.datepickerSelect.defaults = {
+		monthnames: undefined
 	};
 	$.fn.datepickerSelect.Constructor = DatepickerSelect;
 
