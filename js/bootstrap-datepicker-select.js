@@ -64,14 +64,15 @@
 		_this.language = _this.language in dates ? _this.language : "en";
 		//_this.isRTL = dates[_this.language].rtl||false;
 		_this.format = DPGlobal.parseFormat(options.format||_this.element.data('date-format')||dates[_this.language].format||'mm/dd/yyyy');
-		_this.monthnames = (options.monthnames === undefined ? _this.element.data('date-monthnames') : options.monthnames);
-		_this.monthnames = ($.isArray(_this.monthnames)
-			? _this.monthnames
-			: (_this.monthnames === true || _this.monthnames === 'true'
+		_this.monthNames = (options.monthNames === undefined ? _this.element.data('date-monthnames') : options.monthNames);
+		_this.monthNames = ($.isArray(_this.monthNames)
+			? _this.monthNames
+			: (_this.monthNames === true || _this.monthNames === 'true'
 				? dates[_this.language].months
 				: undefined
 			)
 		);
+		_this.measureWidth = !!options.measureWidth;
 		
 		_this.$input = _this.element.find('.datepicker-select-input');
 		_this.$year = _this.element.find('.datepicker-select-year');
@@ -83,7 +84,7 @@
 		_this.$dayDropdown = _this._makeDropdown(_this.$day).addClass('dropdown-long');
 		
 		_this._populateSelect(_this.$year, _this.$yearDropdown, 1900, nowDate.getFullYear(), true);
-		_this._populateSelect(_this.$month, _this.$monthDropdown, 1, 12, false, _this.monthnames);
+		_this._populateSelect(_this.$month, _this.$monthDropdown, 1, 12, false, _this.monthNames);
 		_this._populateSelect(_this.$day, _this.$dayDropdown, 1, 31);
 		
 		_this.$month.add(_this.$year)
@@ -191,12 +192,35 @@
 		_populateDropdown: function ($select, $dd) {
 			var val = $select.val();
 			var items = '';
+			
 			$select.find('option').each(function () {
 				var $option = $(this);
 				var v = $option.attr('value');
 				items += '<li><a href="javascript:;" data-value="' + v + '">' + ($option.html() || '&nbsp;') + '</a></li>';
 			});
+			
 			$dd.html(items);
+			
+			if (this.measureWidth) {
+				// Measure the items to get the maximal width:
+				var width = 0;
+				$dd
+					.addClass('measure-width')
+					.find('> li > a')
+						.each(function () {
+							var w = $(this).width();
+							if (w > width) {
+								width = w;
+							}
+						})
+						.end()
+					.removeClass('measure-width');
+				
+				// Set the minimal width of the current value display field to the maximal width of the items:
+				$dd.parent().find('.dropdown-value').css({ minWidth: width });
+			}
+			
+			// Focus the currently active item:
 			$dd.find('a[data-value="' + val + '"]').focus();
 		},
 		_populateSelect: function ($select, $dd, fromValue, toValue, reverse, displayNames) {
@@ -239,7 +263,8 @@
 	};
 	
 	$.fn.datepickerSelect.defaults = {
-		monthnames: undefined
+		monthNames: undefined,
+		measureWidth: false
 	};
 	$.fn.datepickerSelect.Constructor = DatepickerSelect;
 

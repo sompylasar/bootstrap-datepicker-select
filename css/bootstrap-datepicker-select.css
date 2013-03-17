@@ -14,18 +14,12 @@
 	width: 20px;
 }
 .datepicker-select .datepicker-select-month.m-names .dropdown-value {
-	width: 120px;
+	width: 80px;
 }
 
 .datepicker-select .dropdown-menu {
 	z-index: 4;
 }
-.datepicker-select .dropdown-menu.dropdown-long {
-	max-height: 300px;
-	overflow: hidden;
-	overflow-y: auto;
-}
-
 .datepicker-select .dropdown-menu > li > a,
 .datepicker-select .dropdown-menu > li > a:hover {
 	color: #333333;
@@ -69,6 +63,20 @@
 }
 .datepicker-select .dropdown-menu::-webkit-scrollbar-thumb:hover {
 	background: #7d7d7d;
+}
+
+.datepicker-select .dropdown-menu.dropdown-long {
+	max-height: 300px;
+	overflow: hidden;
+	overflow-y: auto;
+}
+
+.datepicker-select .dropdown-menu.measure-width {
+	display: block !important;
+	visibility: hidden !important;
+}
+.datepicker-select .dropdown-menu.measure-width > li > a {
+	display: inline-block !important;
 }
 
 .datepicker-select .dropdown-arrow {
