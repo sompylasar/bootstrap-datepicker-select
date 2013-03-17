@@ -21,6 +21,7 @@
 	var DPGlobal = $.fn.datepicker.DPGlobal;
 	var dates = $.fn.datepicker.dates;
 
+	// Copied from Bootstrap Dropdown's private scope to be able to close other Dropdowns on the page.
 	var Dropdown_toggle = '[data-toggle=dropdown]';
 
 	function Dropdown_clearMenus() {
