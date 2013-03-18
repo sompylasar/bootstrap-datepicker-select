@@ -4,7 +4,7 @@ A @twitter bootstrap component for selecting a date from three dropdowns: year, 
 
 ## How to use it
 
-1. Include the dependencies (do not use github as CDN except for demo purposes)
+Include the dependencies (do not use github as CDN except for demo purposes)
 
 [Twitter Bootstrap](http://twitter.github.com/bootstrap/) Base CSS (buttons, inputs) and [Dropdown CSS](https://github.com/twitter/bootstrap/blob/master/less/dropdowns.less) are required.
 The component uses some parts of [Bootstrap Datepicker by eternicode](https://github.com/eternicode/bootstrap-datepicker) for counting the number of days in a month, date formatting and month names (see below).
@@ -14,7 +14,7 @@ The component uses some parts of [Bootstrap Datepicker by eternicode](https://gi
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
     <script src="https://raw.github.com/eternicode/bootstrap-datepicker/master/js/bootstrap-datepicker.js"></script>
 
-3. Then just use the markup with `data-toggle` attribute:
+Then just use the markup with `data-toggle` attribute:
 
     <div class="datepicker-select" data-toggle="datepicker-select">
       <select class="datepicker-select-day"></select>
