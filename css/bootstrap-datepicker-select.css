@@ -17,9 +17,6 @@
 	width: 80px;
 }
 
-.datepicker-select .dropdown-menu {
-	z-index: 4;
-}
 .datepicker-select .dropdown-menu > li > a,
 .datepicker-select .dropdown-menu > li > a:hover {
 	color: #333333;
@@ -83,29 +80,28 @@
 	position: absolute;
 	bottom: -3px;
 	right: 7px;
-	z-index: 5;
+	z-index: 1001;
 	display: none;
 }
+.datepicker-select .dropdown-arrow:before,
+.datepicker-select .dropdown-arrow:after {
+  position: absolute;
+  bottom: 0px;
+  display: block;
+  content: '';
+}
 .datepicker-select .dropdown-arrow:before {
-	position: absolute;
-	bottom: 0px;
-	right: 0px;
-	display: inline-block;
-	border-right: 7px solid transparent;
-	border-bottom: 7px solid #ccc;
-	border-left: 7px solid transparent;
-	border-bottom-color: rgba(0, 0, 0, 0.2);
-	content: '';
+  right: 0px;
+  border-right: 7px solid transparent;
+  border-bottom: 7px solid #ccc;
+  border-left: 7px solid transparent;
+  border-bottom-color: rgba(0, 0, 0, 0.2);
 }
 .datepicker-select .dropdown-arrow:after {
-	position: absolute;
-	bottom: 0px;
-	right: 1px;
-	display: inline-block;
-	border-right: 6px solid transparent;
-	border-bottom: 6px solid #ffffff;
-	border-left: 6px solid transparent;
-	content: '';
+  right: 1px;
+  border-right: 6px solid transparent;
+  border-bottom: 6px solid #ffffff;
+  border-left: 6px solid transparent;
 }
 
 .datepicker-select .open > .dropdown-menu {
