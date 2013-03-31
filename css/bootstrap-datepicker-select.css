@@ -17,6 +17,13 @@
 	width: 80px;
 }
 
+.datepicker-select .datepicker-select-year .dropdown-menu,
+.datepicker-select .datepicker-select-day .dropdown-menu {
+	min-width: 60px;
+}
+.datepicker-select .datepicker-select-month .dropdown-menu {
+	min-width: 120px;
+}
 .datepicker-select .dropdown-menu > li > a,
 .datepicker-select .dropdown-menu > li > a:hover {
 	color: #333333;
