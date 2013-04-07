@@ -17,7 +17,7 @@
  * limitations under the License.
  * ========================================================= */
 
-!function( $, undefined ) {
+(function( window, $, undefined ) {'use strict';
 	var DPGlobal = $.fn.datepicker.DPGlobal;
 	var dates = $.fn.datepicker.dates;
 
@@ -33,31 +33,32 @@
 	// Copied from Bootstrap Dropdown's private scope to be able to close other Dropdowns on the page.
 	var Dropdown_toggle = '[data-toggle=dropdown]';
 
-	function Dropdown_clearMenus() {
-		$(Dropdown_toggle).each(function () {
-			Dropdown_getParent($(this)).removeClass('open')
-		})
-	}
-
 	function Dropdown_getParent($this) {
 		var selector = $this.attr('data-target')
-			, $parent
+			, $parent;
 
 		if (!selector) {
-			selector = $this.attr('href')
-			selector = selector && /#/.test(selector) && selector.replace(/.*(?=#[^\s]*$)/, '') //strip for ie7
+			selector = $this.attr('href');
+			selector = selector && /#/.test(selector) && selector.replace(/.*(?=#[^\s]*$)/, ''); //strip for ie7
 		}
 
-		$parent = selector && $(selector)
+		$parent = selector && $(selector);
 
-		if (!$parent || !$parent.length) $parent = $this.parent()
+		if (!$parent || !$parent.length) { $parent = $this.parent(); }
 
-		return $parent
+		return $parent;
 	}
-	
+
+	function Dropdown_clearMenus() {
+		$(Dropdown_toggle).each(function () {
+			Dropdown_getParent($(this)).removeClass('open');
+		});
+	}
+
 	var DatepickerSelect = function (element, options) {
 		var _this = this;
 		var nowDate = UTCToday();
+		var year, month, day;
 		
 		_this.element = $(element);
 		_this.language = options.language||_this.element.data('date-language')||"en";
@@ -93,9 +94,9 @@
 		_this._populateSelect(_this.$month, 1, 12, false, _this.monthNames);
 		
 		if (selectedDate) {
-			var year = selectedDate.getUTCFullYear();
-			var month = (selectedDate.getUTCMonth() + 1);
-			var day = selectedDate.getUTCDate();
+			year = selectedDate.getUTCFullYear();
+			month = (selectedDate.getUTCMonth() + 1);
+			day = selectedDate.getUTCDate();
 			
 			if (!isNaN(year)) {
 				_this.$year.val(year);
@@ -180,8 +181,9 @@
 		setDate: function (date, format) {
 			var _this = this;
 			
-			if (format === undefined)
+			if (format === undefined) {
 				format = _this.format;
+			}
 			
 			if (date) {
 				date = DPGlobal.parseDate(date, format, _this.language);
@@ -201,8 +203,9 @@
 			var _this = this,
 				year, month, day;
 			
-			if (format === undefined)
+			if (format === undefined) {
 				format = _this.format;
+			}
 			
 			if (date) {
 				date = DPGlobal.parseDate(date, format, _this.language);
@@ -234,8 +237,9 @@
 			var _this = this,
 				date;
 			
-			if (format === undefined)
+			if (format === undefined) {
 				format = _this.format;
+			}
 			
 			date = _this.getUTCDate();
 			
@@ -384,9 +388,11 @@
 			}
 		},
 		_populateSelect: function ($select, fromValue, toValue, reverse, displayNames) {
-			var items = '';
+			var items = '',
+				vbegin, vend, vdelta, v, i;
+			
 			items += '<option value=""></option>';
-			for (var
+			for (
 				vbegin = (reverse ? toValue : fromValue),
 				vend = (reverse ? fromValue : toValue),
 				vdelta = (reverse ? -1 : 1),
@@ -398,6 +404,7 @@
 			) {
 				items += '<option value="' + v + '">' + (displayNames ? displayNames[i] : v) + '</option>';
 			}
+			
 			$select.html(items);
 		}
 	};
@@ -408,11 +415,11 @@
 		return this.each(function () {
 			var $this = $(this),
 				data = $this.data('datepicker-select'),
-				options = typeof option == 'object' && option;
+				options = typeof option === 'object' && option;
 			if (!data) {
 				$this.data('datepicker-select', (data = new DatepickerSelect(this, $.extend({}, $.fn.datepickerSelect.defaults,options))));
 			}
-			if (typeof option == 'string' && typeof data[option] == 'function') {
+			if (typeof option === 'string' && typeof data[option] === 'function') {
 				data[option].apply(data, args);
 			}
 		});
@@ -428,7 +435,7 @@
 	};
 	$.fn.datepickerSelect.Constructor = DatepickerSelect;
 
-	$(document)
+	$(window.document)
 		.on('keydown.datepicker-select', function (e) {
 			var $items;
 			var $item;
@@ -440,20 +447,20 @@
 			var $select;
 			var val;
 
-			if (!$dd.length && !$toggle.length) return;
+			if (!$dd.length && !$toggle.length) { return; }
 
-			if (!/(38|40|37|39|36|35|33|34|9|13|27)/.test(e.keyCode)) return;
+			if (!/(38|40|37|39|36|35|33|34|9|13|27)/.test(e.keyCode)) { return; }
 
 			if ($dd.length) {
 				$items = $dd.find(' > li:not(.divider):visible a');
 				$item = $items.filter(':focus, .focus').eq(0);
 				
-				if (e.keyCode == 9 || e.keyCode == 13) { // tab || enter
+				if (e.keyCode === 9 || e.keyCode === 13) { // tab || enter
 					$item.trigger('click');
 					$dd.parent().find('.dropdown-toggle').focus();
 					return;
 				}
-				if (e.keyCode == 27) { // escape
+				if (e.keyCode === 27) { // escape
 					$dd.parent().find('.dropdown-toggle').focus();
 					return;
 				}
@@ -472,10 +479,10 @@
 				
 				itemsOnPage = 10;
 				
-				if (e.keyCode == 9 || e.keyCode == 13) { // tab || enter
+				if (e.keyCode === 9 || e.keyCode === 13) { // tab || enter
 					return;
 				}
-				if (e.keyCode == 27) { // escape
+				if (e.keyCode === 27) { // escape
 					return;
 				}
 			}
@@ -486,19 +493,19 @@
 			e.stopPropagation();
 
 			count = $items.length;
-			if (!count) return;
+			if (!count) { return; }
 
 			var index = $items.index($item);
 
-			if (e.keyCode == 38 && index > 0) index--;                                        // up
-			if (e.keyCode == 40 && index < count - 1) index++;                                // down
-			if (!$dd.length && e.keyCode == 37 && index > 0) index--;                                        // left
-			if (!$dd.length && e.keyCode == 39 && index < count - 1) index++;                                // right
-			if (e.keyCode == 36) index = 0;                                                   // home
-			if (e.keyCode == 35) index = count - 1;                                           // end
-			if (e.keyCode == 33) index = (index - itemsOnPage > 0 ? index - itemsOnPage : 0);           // page up
-			if (e.keyCode == 34) index = (index + itemsOnPage < count - 1 ? index + itemsOnPage : count - 1);  // page down
-			if (!~index) index = 0;
+			if (e.keyCode === 38 /* UP */ && index > 0) { index--; }
+			if (e.keyCode === 40 /* DOWN */ && index < count - 1) { index++; }
+			if (!$dd.length && e.keyCode === 37 /* LEFT */ && index > 0) { index--; }
+			if (!$dd.length && e.keyCode === 39 /* RIGHT */ && index < count - 1) { index++; }
+			if (e.keyCode === 36 /* HOME */) { index = 0; }
+			if (e.keyCode === 35 /* END */) { index = count - 1; }
+			if (e.keyCode === 33 /* PAGE UP */) { index = (index - itemsOnPage > 0 ? index - itemsOnPage : 0); }
+			if (e.keyCode === 34 /* PAGE DOWN */) { index = (index + itemsOnPage < count - 1 ? index + itemsOnPage : count - 1); }
+			if (!~index) { index = 0; }
 
 			$item = $items.eq(index);
 
@@ -513,4 +520,4 @@
 	$(function () {
 		$('[data-toggle="datepicker-select"]').datepickerSelect();
 	});
-}( window.jQuery );
+}( window, window.jQuery ));
