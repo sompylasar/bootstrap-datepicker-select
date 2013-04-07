@@ -77,12 +77,13 @@
 		
 		_this.$input = _this.element.find('.datepicker-select-input');
 		
-		var selectedDate = options.date || _this.$input.val() || nowDate;
-		selectedDate = DPGlobal.parseDate(selectedDate, _this.format, _this.language);
-		
-		var year = selectedDate.getUTCFullYear();
-		var month = (selectedDate.getUTCMonth() + 1);
-		var day = selectedDate.getUTCDate();
+		var selectedDate = options.date || _this.$input.val();
+		if (selectedDate) {
+			selectedDate = DPGlobal.parseDate(selectedDate, _this.format, _this.language);
+		}
+		else {
+			selectedDate = null;
+		}
 		
 		_this.$year = _this.element.find('.datepicker-select-year');
 		_this.$month = _this.element.find('.datepicker-select-month');
@@ -91,12 +92,24 @@
 		_this._populateSelect(_this.$year, 1900, nowDate.getFullYear(), !!options.yearsReverse);
 		_this._populateSelect(_this.$month, 1, 12, false, _this.monthNames);
 		
-		_this.$year.val( year );
-		_this.$month.val( month );
+		if (selectedDate) {
+			var year = selectedDate.getUTCFullYear();
+			var month = (selectedDate.getUTCMonth() + 1);
+			var day = selectedDate.getUTCDate();
+			
+			if (!isNaN(year)) {
+				_this.$year.val(year);
+			}
+			if (!isNaN(month)) {
+				_this.$month.val(month);
+			}
+		}
 		
-		_this._populateSelect(_this.$day, 1, DPGlobal.getDaysInMonth(year, month - 1));
+		_this._populateSelect(_this.$day, 1, (selectedDate ? DPGlobal.getDaysInMonth(year, month - 1) : 31));
 		
-		_this.$day.val( day );
+		if (selectedDate && !isNaN(day)) {
+			_this.$day.val(day);
+		}
 		
 		_this.$yearDropdown = _this._makeDropdown(_this.$year, true);
 		_this.$monthDropdown = _this._makeDropdown(_this.$month, false, !!_this.monthNames);
@@ -108,7 +121,7 @@
 		
 		_this.$day
 			.on('change.datepicker-select', function () {
-				_this.$input.val(_this.getFormattedDate()).trigger('change.datepicker-select');
+				_this.$input.val(_this.getFormattedDate() || '').trigger('change.datepicker-select');
 			});
 		
 		_this.$year.add(_this.$month)
@@ -116,12 +129,23 @@
 				var year = parseInt(_this.$year.val(), 10);
 				var month = parseInt(_this.$month.val(), 10);
 				var day = parseInt(_this.$day.val(), 10);
-				_this._populateSelect(_this.$day,  1, DPGlobal.getDaysInMonth(year, month - 1));
-				_this._populateDropdown(_this.$day, _this.$dayDropdown);
-				_this.$day.val(day).trigger('change.datepicker-select');
+				if (!isNaN(year) && !isNaN(month)) {
+					_this._populateSelect(_this.$day,  1, DPGlobal.getDaysInMonth(year, month - 1));
+					_this._populateDropdown(_this.$day, _this.$dayDropdown);
+				}
+				else {
+					_this._populateSelect(_this.$day,  1, 31);
+					_this._populateDropdown(_this.$day, _this.$dayDropdown);
+				}
+				if (!isNaN(day)) {
+					_this.$day.val(day).trigger('change.datepicker-select');
+				}
+				else {
+					_this.$day.val('').trigger('change.datepicker-select');
+				}
 			});
 		
-		_this.$input.val(_this.getFormattedDate()).trigger('change.datepicker-select');
+		_this.$input.val(selectedDate ? _this.getFormattedDate() || '' : '').trigger('change.datepicker-select');
 	};
 	DatepickerSelect.prototype = {
 		constructor: DatepickerSelect,
@@ -155,10 +179,15 @@
 
 		setDate: function (date, format) {
 			var _this = this;
+			
 			if (format === undefined)
 				format = _this.format;
-			date = DPGlobal.parseDate(date, format, _this.language);
-			this.setUTCDate(new Date(date.getTime() - (date.getTimezoneOffset()*60000)));
+			
+			if (date) {
+				date = DPGlobal.parseDate(date, format, _this.language);
+			}
+			
+			this.setUTCDate(date ? new Date(date.getTime() - (date.getTimezoneOffset()*60000)) : null);
 		},
 
 		/**
@@ -169,17 +198,29 @@
 		 * @param {Object} [format] Parsed format returned from DPGlobal.parseFormat(format:String)
 		 */
 		setUTCDate: function (date, format) {
-			var _this = this;
+			var _this = this,
+				year, month, day;
+			
 			if (format === undefined)
 				format = _this.format;
-			date = DPGlobal.parseDate(date, format, _this.language);
-			var year = date.getUTCFullYear();
-			var month = (date.getUTCMonth() + 1);
-			var day = date.getUTCDate();
+			
+			if (date) {
+				date = DPGlobal.parseDate(date, format, _this.language);
+				
+				year = date.getUTCFullYear();
+				month = (date.getUTCMonth() + 1);
+				day = date.getUTCDate();
+			}
+			
 			if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
-				_this.$year.val( year ).trigger('change.datepicker-select');
-				_this.$month.val( month ).trigger('change.datepicker-select');
-				_this.$day.val( day ).trigger('change.datepicker-select');
+				_this.$year.val(year).trigger('change.datepicker-select');
+				_this.$month.val(month).trigger('change.datepicker-select');
+				_this.$day.val(day).trigger('change.datepicker-select');
+			}
+			else {
+				_this.$year.val('').trigger('change.datepicker-select');
+				_this.$month.val('').trigger('change.datepicker-select');
+				_this.$day.val('').trigger('change.datepicker-select');
 			}
 		},
 
@@ -190,16 +231,21 @@
 		 * @param {String} The date formatted according to the current or the specified format.
 		 */
 		getFormattedDate: function (format) {
-			var _this = this;
+			var _this = this,
+				date;
+			
 			if (format === undefined)
 				format = _this.format;
-			return DPGlobal.formatDate(_this.getUTCDate(), format, _this.language);
+			
+			date = _this.getUTCDate();
+			
+			return (date ? DPGlobal.formatDate(date, format, _this.language) : '');
 		},
 
 		update: function () {
 			var _this = this;
 			if (_this.$input.length) {
-				_this.setUTCDate(_this.$input.val());
+				_this.setUTCDate(_this.$input.val() || '');
 			}
 		},
 
@@ -241,8 +287,12 @@
 						$dd.removeClass('keyboard-nav');
 						
 						$wrapper.addClass('open');
+						
 						var val = $select.val();
-						$dd.find('a[data-value="' + val + '"]').focus();
+						if (val) {
+							$dd.find('a[data-value="' + val + '"]').focus();
+						}
+						
 						event.stopPropagation();
 					}
 				});
@@ -272,7 +322,10 @@
 					$dd.removeClass('keyboard-nav');
 				})
 				.on('click', 'a', function () {
-					$select.val($(this).data('value')).trigger('change.datepicker-select');
+					var val = $(this).data('value');
+					if (val) {
+						$select.val(val).trigger('change.datepicker-select');
+					}
 				});
 			
 			_this._populateDropdown($select, $dd);
@@ -283,7 +336,7 @@
 		_populateValue: function ($select, $dd, $v) {
 			var val = $select.val();
 			var empty = '&nbsp;';
-			if (val !== undefined) {
+			if (val) {
 				var $option = $select.find('option[value="' + val + '"]');
 				$v.html($option.html() || empty);
 				$dd.find('a[data-value="' + val + '"]').focus();
@@ -299,7 +352,9 @@
 			$select.find('option').each(function () {
 				var $option = $(this);
 				var v = $option.attr('value');
-				items += '<li><a href="javascript:;" data-value="' + v + '">' + ($option.html() || '&nbsp;') + '</a></li>';
+				if (v) {
+					items += '<li><a href="javascript:;" data-value="' + v + '">' + ($option.html() || '&nbsp;') + '</a></li>';
+				}
 			});
 			
 			$dd.html(items);
@@ -323,11 +378,14 @@
 				$dd.parent().find('.dropdown-value').css({ minWidth: width });
 			}
 			
-			// Focus the currently active item:
-			$dd.find('a[data-value="' + val + '"]').focus();
+			if (val) {
+				// Focus the currently active item:
+				$dd.find('a[data-value="' + val + '"]').focus();
+			}
 		},
 		_populateSelect: function ($select, fromValue, toValue, reverse, displayNames) {
 			var items = '';
+			items += '<option value=""></option>';
 			for (var
 				vbegin = (reverse ? toValue : fromValue),
 				vend = (reverse ? fromValue : toValue),
@@ -380,6 +438,7 @@
 			var $toggle = $('.dropdown-toggle:focus');
 			var $dd = $(':not(.disabled, :disabled).open > .dropdown-menu');
 			var $select;
+			var val;
 
 			if (!$dd.length && !$toggle.length) return;
 
@@ -405,7 +464,12 @@
 			else {
 				$select = $toggle.parent().find('select:not(.disabled, :disabled)');
 				$items = $select.find('> option:not(.disabled, :disabled)');
-				$item = $items.filter('[value="' + $select.val() + '"]');
+				
+				val = $select.val();
+				if (val) {
+					$item = $items.filter('[value="' + val + '"]').eq(0);
+				}
+				
 				itemsOnPage = 10;
 				
 				if (e.keyCode == 9 || e.keyCode == 13) { // tab || enter
@@ -442,7 +506,7 @@
 				$item.focus();
 			}
 			else {
-				$select.val($item.attr('value')).trigger('change.datepicker-select');
+				$select.val($item.attr('value') || '').trigger('change.datepicker-select');
 			}
 		});
 
