@@ -268,6 +268,7 @@
 			var $v = $wrapper.find('.dropdown-value');
 			var $dd = $wrapper.find('.dropdown-menu');
 			var $arrow = $wrapper.find('.dropdown-arrow');
+			var $toggle = $wrapper.find('.dropdown-toggle');
 			
 			$select.hide().after($wrapper);
 			$wrapper.prepend($select);
@@ -278,12 +279,19 @@
 					$dd.before($arrow.removeClass('m-open'));
 				});
 			
-			$wrapper.find('.dropdown-toggle')
+			$v
+				.on('focus.datepicker-select, click.datepicker-select', function () {
+					$toggle.focus();
+				});
+				
+			$toggle
 				.on('focus.datepicker-select', function () {
 					Dropdown_clearMenus();
 					$('.open > .dropdown-menu').each(function () { $(this).parent().removeClass('open'); });
 				})
 				.on('click.datepicker-select', function (event) {
+					$toggle.focus();
+					
 					if (!$wrapper.hasClass('open')) {
 						Dropdown_clearMenus();
 						$('.open > .dropdown-menu').each(function () { $(this).parent().removeClass('open'); });
@@ -434,14 +442,30 @@
 		measureWidth: false
 	};
 	$.fn.datepickerSelect.Constructor = DatepickerSelect;
-
+	
+	var KEYCODES = {
+		TAB: 9,
+		ENTER: 13,
+		ESCAPE: 27,
+		UP: 38,
+		DOWN: 40,
+		LEFT: 37,
+		RIGHT: 39,
+		HOME: 36,
+		END: 35,
+		PAGE_UP: 33,
+		PAGE_DOWN: 34
+	};
+	
+	var INVISIBLE_ITEMS_PER_PAGE = 10;
+	
 	$(window.document)
 		.on('keydown.datepicker-select', function (e) {
 			var $items;
 			var $item;
 			var count;
 			var itemHeight;
-			var itemsOnPage;
+			var itemsPerPage;
 			var $toggle = $('.dropdown-toggle:focus');
 			var $dd = $(':not(.disabled, :disabled).open > .dropdown-menu');
 			var $select;
@@ -449,40 +473,44 @@
 
 			if (!$dd.length && !$toggle.length) { return; }
 
-			if (!/(38|40|37|39|36|35|33|34|9|13|27)/.test(e.keyCode)) { return; }
+			if ([
+				KEYCODES.UP, KEYCODES.DOWN, KEYCODES.LEFT, KEYCODES.RIGHT,
+				KEYCODES.HOME, KEYCODES.END, KEYCODES.PAGE_DOWN, KEYCODES.PAGE_UP,
+				KEYCODES.TAB, KEYCODES.ENTER, KEYCODES.ESCAPE
+			].indexOf(e.keyCode) < 0) { return; }
 
-			if ($dd.length) {
-				$items = $dd.find(' > li:not(.divider):visible a');
+			$items = $dd.find(' > li:not(.divider):visible a');
+			if ($dd.is(':visible') && $items.length) {
 				$item = $items.filter(':focus, .focus').eq(0);
 				
-				if (e.keyCode === 9 || e.keyCode === 13) { // tab || enter
+				if (e.keyCode === KEYCODES.TAB || e.keyCode === KEYCODES.ENTER) {
 					$item.trigger('click');
 					$dd.parent().find('.dropdown-toggle').focus();
 					return;
 				}
-				if (e.keyCode === 27) { // escape
+				if (e.keyCode === KEYCODES.ESCAPE) {
 					$dd.parent().find('.dropdown-toggle').focus();
 					return;
 				}
 				
 				itemHeight = $items.eq(0).closest('li').outerHeight();
-				itemsOnPage = Math.floor($dd.height() / itemHeight);
+				itemsPerPage = Math.floor($dd.height() / itemHeight);
 			}
 			else {
 				$select = $toggle.parent().find('select:not(.disabled, :disabled)');
-				$items = $select.find('> option:not(.disabled, :disabled)');
+				$items = $select.find('> option:not(.disabled, :disabled):not([value=""])');
 				
 				val = $select.val();
 				if (val) {
 					$item = $items.filter('[value="' + val + '"]').eq(0);
 				}
 				
-				itemsOnPage = 10;
+				itemsPerPage = INVISIBLE_ITEMS_PER_PAGE;
 				
-				if (e.keyCode === 9 || e.keyCode === 13) { // tab || enter
+				if (e.keyCode === KEYCODES.TAB || e.keyCode === KEYCODES.ENTER) {
 					return;
 				}
-				if (e.keyCode === 27) { // escape
+				if (e.keyCode === KEYCODES.ESCAPE) {
 					return;
 				}
 			}
@@ -495,16 +523,16 @@
 			count = $items.length;
 			if (!count) { return; }
 
-			var index = $items.index($item);
+			var index = ($item ? $items.index($item) : -1);
 
-			if (e.keyCode === 38 /* UP */ && index > 0) { index--; }
-			if (e.keyCode === 40 /* DOWN */ && index < count - 1) { index++; }
-			if (!$dd.length && e.keyCode === 37 /* LEFT */ && index > 0) { index--; }
-			if (!$dd.length && e.keyCode === 39 /* RIGHT */ && index < count - 1) { index++; }
-			if (e.keyCode === 36 /* HOME */) { index = 0; }
-			if (e.keyCode === 35 /* END */) { index = count - 1; }
-			if (e.keyCode === 33 /* PAGE UP */) { index = (index - itemsOnPage > 0 ? index - itemsOnPage : 0); }
-			if (e.keyCode === 34 /* PAGE DOWN */) { index = (index + itemsOnPage < count - 1 ? index + itemsOnPage : count - 1); }
+			if (e.keyCode === KEYCODES.UP && index > 0) { index--; }
+			if (e.keyCode === KEYCODES.DOWN && index < count - 1) { index++; }
+			if (!$dd.length && e.keyCode === KEYCODES.LEFT && index > 0) { index--; }
+			if (!$dd.length && e.keyCode === KEYCODES.RIGHT && index < count - 1) { index++; }
+			if (e.keyCode === KEYCODES.HOME) { index = 0; }
+			if (e.keyCode === KEYCODES.END) { index = count - 1; }
+			if (e.keyCode === KEYCODES.PAGE_UP) { index = (index - itemsPerPage > 0 ? index - itemsPerPage : 0); }
+			if (e.keyCode === KEYCODES.PAGE_DOWN) { index = (index + itemsPerPage < count - 1 ? index + itemsPerPage : count - 1); }
 			if (!~index) { index = 0; }
 
 			$item = $items.eq(index);
