@@ -122,7 +122,7 @@
 		
 		_this.$day
 			.on('change.datepicker-select', function () {
-				_this.$input.val(_this.getFormattedDate() || '').trigger('change.datepicker-select');
+				_this.$input.val(_this.getFormattedDate() || '').trigger('change');
 			});
 		
 		_this.$year.add(_this.$month)
@@ -139,14 +139,14 @@
 					_this._populateDropdown(_this.$day, _this.$dayDropdown);
 				}
 				if (!isNaN(day)) {
-					_this.$day.val(day).trigger('change.datepicker-select');
+					_this.$day.val(day).trigger('change');
 				}
 				else {
-					_this.$day.val('').trigger('change.datepicker-select');
+					_this.$day.val('').trigger('change');
 				}
 			});
 		
-		_this.$input.val(selectedDate ? _this.getFormattedDate() || '' : '').trigger('change.datepicker-select');
+		_this.$input.val(selectedDate ? _this.getFormattedDate() || '' : '').trigger('change');
 	};
 	DatepickerSelect.prototype = {
 		constructor: DatepickerSelect,
@@ -216,14 +216,14 @@
 			}
 			
 			if (!isNaN(year) && !isNaN(month) && !isNaN(day)) {
-				_this.$year.val(year).trigger('change.datepicker-select');
-				_this.$month.val(month).trigger('change.datepicker-select');
-				_this.$day.val(day).trigger('change.datepicker-select');
+				_this.$year.val(year).trigger('change');
+				_this.$month.val(month).trigger('change');
+				_this.$day.val(day).trigger('change');
 			}
 			else {
-				_this.$year.val('').trigger('change.datepicker-select');
-				_this.$month.val('').trigger('change.datepicker-select');
-				_this.$day.val('').trigger('change.datepicker-select');
+				_this.$year.val('').trigger('change');
+				_this.$month.val('').trigger('change');
+				_this.$day.val('').trigger('change');
 			}
 		},
 
@@ -328,7 +328,7 @@
 				.on('click', 'a', function () {
 					var val = $(this).data('value');
 					if (val) {
-						$select.val(val).trigger('change.datepicker-select');
+						$select.val(val).trigger('change');
 					}
 				});
 			
@@ -513,7 +513,7 @@
 				$item.focus();
 			}
 			else {
-				$select.val($item.attr('value') || '').trigger('change.datepicker-select');
+				$select.val($item.attr('value') || '').trigger('change');
 			}
 		});
 
