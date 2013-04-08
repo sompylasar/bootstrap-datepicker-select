@@ -280,8 +280,13 @@
 				});
 			
 			$v
-				.on('focus.datepicker-select, click.datepicker-select', function () {
+				.on('focus.datepicker-select', function (event) {
 					$toggle.focus();
+					event.stopPropagation();
+				})
+				.on('click.datepicker-select', function (event) {
+					$toggle.click();
+					event.stopPropagation();
 				});
 				
 			$toggle
